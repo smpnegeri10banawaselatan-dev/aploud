@@ -2,82 +2,52 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Upload Dokumen</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
-
-  <h1 class="text-2xl font-bold mb-6">📊 Dashboard Upload Dokumen</h1>
-
-  <!-- Filter -->
-  <div class="flex gap-4 mb-4">
-    <select id="filterKategori" class="p-2 border rounded">
-      <option value="">Semua Kategori</option>
-      <option value="RPP">RPP</option>
-      <option value="Absen Harian">Absen Harian</option>
-      <option value="Bukti Dukung">Bukti Dukung</option>
-    </select>
-
-    <input id="searchNama" type="text" placeholder="Cari nama..."
-           class="p-2 border rounded flex-1">
-    <button onclick="loadData()" class="bg-blue-500 text-white px-4 py-2 rounded">🔄 Refresh</button>
-  </div>
-
-  <!-- Tabel -->
-  <div class="overflow-x-auto bg-white shadow-md rounded-lg">
-    <table class="min-w-full border">
-      <thead class="bg-blue-500 text-white">
-        <tr>
-          <th class="px-4 py-2 border">No</th>
-          <th class="px-4 py-2 border">Nama</th>
-          <th class="px-4 py-2 border">Kategori</th>
-          <th class="px-4 py-2 border">Link Dokumen</th>
-          <th class="px-4 py-2 border">Tanggal Upload</th>
+  <h1 class="text-2xl font-bold mb-4">Dashboard Dokumen Terupload</h1>
+  <div class="overflow-x-auto">
+    <table class="table-auto w-full border-collapse border border-gray-300 bg-white shadow-md">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-2">No</th>
+          <th class="border p-2">Nama</th>
+          <th class="border p-2">Kategori</th>
+          <th class="border p-2">Link Dokumen</th>
+          <th class="border p-2">Tanggal Upload</th>
         </tr>
       </thead>
-      <tbody id="tableBody" class="text-center"></tbody>
+      <tbody id="dataBody"></tbody>
     </table>
   </div>
 
   <script>
     async function loadData() {
-      document.getElementById("tableBody").innerHTML =
-        `<tr><td colspan="5" class="p-4">⏳ Memuat data...</td></tr>`;
+      try {
+        const response = await fetch("YOUR_APPS_SCRIPT_URL?page=dashboard");
+        const data = await response.json();
 
-      google.script.run.withSuccessHandler((data) => {
-        const filterKategori = document.getElementById("filterKategori").value.toLowerCase();
-        const searchNama = document.getElementById("searchNama").value.toLowerCase();
+        const tbody = document.getElementById("dataBody");
+        tbody.innerHTML = "";
 
-        let filtered = data.filter(row => {
-          let nama = row[1]?.toLowerCase() || "";
-          let kategori = row[2]?.toLowerCase() || "";
-          return (filterKategori === "" || kategori.includes(filterKategori)) &&
-                 (searchNama === "" || nama.includes(searchNama));
+        data.forEach((row, index) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${index + 1}</td>
+            <td class="border p-2">${row.nama}</td>
+            <td class="border p-2">${row.kategori}</td>
+            <td class="border p-2"><a href="${row.link}" target="_blank" class="text-blue-600 underline">Lihat</a></td>
+            <td class="border p-2">${row.tanggal}</td>
+          `;
+          tbody.appendChild(tr);
         });
-
-        let html = "";
-        if (filtered.length === 0) {
-          html = `<tr><td colspan="5" class="p-4">❌ Tidak ada data</td></tr>`;
-        } else {
-          filtered.forEach((row, i) => {
-            html += `
-              <tr class="hover:bg-gray-100">
-                <td class="px-4 py-2 border">${i + 1}</td>
-                <td class="px-4 py-2 border">${row[1]}</td>
-                <td class="px-4 py-2 border">${row[2]}</td>
-                <td class="px-4 py-2 border">
-                  <a href="${row[3]}" target="_blank" class="text-blue-600 underline">Lihat Dokumen</a>
-                </td>
-                <td class="px-4 py-2 border">${new Date(row[4]).toLocaleString("id-ID")}</td>
-              </tr>
-            `;
-          });
-        }
-        document.getElementById("tableBody").innerHTML = html;
-      }).getDataUpload();
+      } catch (error) {
+        console.error("Gagal load data:", error);
+      }
     }
 
-    // load pertama kali
     loadData();
   </script>
 </body>
